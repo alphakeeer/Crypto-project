@@ -17,6 +17,8 @@ from .rsa import (                       # type: ignore F401
     decrypt as rsa_decrypt,
     sign as rsa_sign,
     verify as rsa_verify,
+    encrypt_long as rsa_encrypt_long,
+    decrypt_long as rsa_decrypt_long,
 )
 from .elgamal import (                   # type: ignore F401
     ElGamalPublicKey,
@@ -35,6 +37,8 @@ __all__: list[str] = [
     "rsa_decrypt",
     "rsa_sign",
     "rsa_verify",
+    "rsa_encrypt_long",
+    "rsa_decrypt_long",
     # ElGamal
     "ElGamalPublicKey",
     "ElGamalPrivateKey",

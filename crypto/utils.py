@@ -3,12 +3,21 @@
 """
 
 from __future__ import annotations
-
+from dataclasses import dataclass
+from typing import Tuple
+import random
 
 def gcd(a: int, b: int) -> int:
     """最大公约数"""
     pass
 
+def extended_gcd(a: int, b: int) -> Tuple[int, int, int]:
+    """扩展欧几里得算法"""
+    if a == 0:
+        return (b, 0, 1)
+    else:
+        g, y, x = extended_gcd(b % a, a)
+        return (g, x - (b // a) * y, y)
 
 def lcm(a: int, b: int) -> int:
     """最小公倍数"""
@@ -17,7 +26,9 @@ def lcm(a: int, b: int) -> int:
 
 def modinv(a: int, m: int) -> int:
     """模反元素：求 a⁻¹ mod m，如不存在则抛异常"""
-    pass
+    g, x, y = extended_gcd(a, m)
+    if g != 1:
+        raise ValueError('模逆元不存在')
 
 
 def bytes_to_int(data: bytes) -> int:
@@ -33,11 +44,24 @@ def int_to_bytes(n: int, length: int | None = None) -> bytes:
     pass
 
 
-def pad_pkcs1(msg: bytes, key_len: int) -> bytes:
-    """PKCS#1 v1.5 填充（仅示例，生产环境请改用 OAEP）"""
-    pass
+def pad_pkcs1(data: bytes, n_bytes: int) -> bytes:
+    """PKCS#1 v1.5 填充"""
+    if len(data) > n_bytes - 11:
+        raise ValueError("数据太长无法填充")
+    
+    padding_length = n_bytes - len(data) - 3
+    padding = bytes([random.randint(1, 255) for _ in range(padding_length)])
+    
+    return b'\x00\x02' + padding + b'\x00' + data
 
 
-def unpad_pkcs1(padded: bytes) -> bytes:
-    """去除 PKCS#1 v1.5 填充；非法填充应抛异常"""
-    pass
+def unpad_pkcs1(padded_data: bytes) -> bytes:
+    """PKCS#1 v1.5 去除填充"""
+    if len(padded_data) < 11 or padded_data[0:2] != b'\x00\x02':
+        raise ValueError("无效的PKCS#1填充")
+    
+    separator_pos = padded_data.find(b'\x00', 2)
+    if separator_pos == -1:
+        raise ValueError("无效的PKCS#1填充")
+    
+    return padded_data[separator_pos+1:]
