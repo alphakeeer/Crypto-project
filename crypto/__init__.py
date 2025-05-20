@@ -28,6 +28,14 @@ from .elgamal import (                   # type: ignore F401
     decrypt as elgamal_decrypt,
 )
 
+from .ecc_elgamal import (            # type: ignore F401
+    ECCElGamalPublicKey,
+    ECCElGamalPrivateKey,
+    generate_keypair as generate_ecc_elgamal_keypair,
+    encrypt as ecc_elgamal_encrypt,
+    decrypt as ecc_elgamal_decrypt,
+)
+
 __all__: list[str] = [
     # RSA
     "RSAPublicKey",
@@ -45,4 +53,10 @@ __all__: list[str] = [
     "generate_elgamal_keypair",
     "elgamal_encrypt",
     "elgamal_decrypt",
+    # ECC ElGamal
+    "ECCElGamalPublicKey",
+    "ECCElGamalPrivateKey",
+    "generate_ecc_elgamal_keypair",
+    "ecc_elgamal_encrypt",
+    "ecc_elgamal_decrypt",
 ]
