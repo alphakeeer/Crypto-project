@@ -11,8 +11,8 @@ import math
 import random
 import hashlib
 
-from primes import *
-from utils import *
+from .primes import *
+from .utils import *
 
 # ─────────────────────── 数据结构 ────────────────────────
 
