@@ -7,122 +7,102 @@
 from __future__ import annotations
 
 import random
-from typing import List
+from typing import List, Sequence
+from functools import lru_cache
+import secrets
+import math
+
 
 
 # 一组小素数，用于快速试除
-_small_primes: List[int] = [
-    2, 3, 5, 7, 11, 13, 17, 19, 23, 29,
-    31, 37, 41, 43, 47, 53, 59, 61, 67, 71
-]
+# 首先预计算 1000 以内所有素数，供快速试除
+@lru_cache(maxsize=1)
+def _small_primes() -> Sequence[int]:
+    sieve = bytearray([1]) * 1000
+    sieve[0:2] = b'\x00\x00'
+    for i in range(2, int(math.isqrt(999)) + 1):
+        if sieve[i]:
+            sieve[i*i :: i] = b'\x00' * ((999 - i*i) // i + 1)
+    return tuple(i for i, is_p in enumerate(sieve) if is_p)
 
-def is_prime(n: int) -> bool:
-    """快速判断 n 是否为素数（先试除小素数，再调用 _miller_rabin）
+_SMALL_PRIMES = _small_primes()
 
-    Parameters
-    ----------
-    n : int
-        待测正整数
 
-    Returns
-    -------
-    bool
-        True 表示 n 极可能为素数，False 表示 n 为合数
+
+def _miller_rabin(n: int, rounds: int) -> bool:
+    """对 *奇整数* n 做 `rounds` 次随机 Miller-Rabin；rounds ≥ 1"""
+    # 写成 n-1 = 2^s * d
+    d, s = n - 1, 0
+    while d & 1 == 0:
+        d >>= 1
+        s += 1
+
+    for _ in range(rounds):
+        a = secrets.randbelow(n - 3) + 2  # a ∈ [2, n-2]
+        x = pow(a, d, n)
+        if x in (1, n - 1):
+            continue
+        for __ in range(s - 1):
+            x = (x * x) % n
+            if x == n - 1:
+                break
+        else:
+            return False
+    return True
+
+def is_prime(n: int, *, rounds: int | None = 40) -> bool:
     """
-    # 小于 2 都不是素数
-    if n < 2:
+    快速判断 n 是否为素数  
+    - 先做极简取模过滤 (n%6∈{1,5})  
+    - 再试除全部 `_SMALL_PRIMES`  
+    - 对 2⁶⁴ 以下的 n 用确定性基底；否则随机做 `rounds` 轮 Miller-Rabin
+    """
+    if n in (2, 3):
+        return True
+    if n < 2 or n & 1 == 0 or n % 3 == 0:
+        return False
+    if n < 25:               # 到这一步只可能是 5,7,11,13,17,19,23
+        return n in (5, 7, 11, 13, 17, 19, 23)
+
+    # n % 6 必须在 {1,5}，否则一定合数（≈17% 数字直接出局）
+    if n % 6 not in (1, 5):
         return False
 
-    # 对小素数列表做试除
-    for p in _small_primes:
+    # 试除小素数
+    for p in _SMALL_PRIMES:
         if n == p:
             return True
         if n % p == 0:
             return False
 
-    # 如果已经试除了列表中的所有小素数，则一定是奇数 > max(_small_primes)
-    # 调用 Miller–Rabin 进行更大范围的检验
-    return _miller_rabin(n)
-
-
-def _miller_rabin(n: int, k: int = None) -> bool:
-    """Miller–Rabin 素性测试（内部函数）
-
-    若不指定 k，则使用针对 64 位整数的确定性基底，保证 64 位范围内零误判。
-
-    Parameters
-    ----------
-    n : int
-        奇整数，待测试（确保 n > max(_small_primes)，且 n 为奇数）
-    k : int, optional
-        随机基底轮数，k 越大误判概率越低；若为 None，则使用确定性基底。
-
-    Returns
-    -------
-    bool
-        True → 可能是素数；False → 一定为合数
-    """
-    # 分解 n-1 = d * 2^s，令 d 为奇数
-    d = n - 1
-    s = 0
-    while d % 2 == 0:
-        d //= 2
-        s += 1
-
-    def trial(a: int) -> bool:
-        """针对单个基底 a 的一次测试"""
-        x = pow(a, d, n)
-        if x == 1 or x == n - 1:
-            return True
-        for _ in range(s - 1):
-            x = pow(x, 2, n)
-            if x == n - 1:
-                return True
-        return False
-
-    # 如果用户指定了随机测试轮数 k，就随机选基底
-    if k is not None:
-        for _ in range(k):
-            a = random.randrange(2, n - 1)
-            if not trial(a):
+    # 进入 Miller-Rabin
+    if n.bit_length() <= 64:
+        # < 2⁶⁴ 时用确定性基底集（Zimmermann 等人给出的最小集）
+        for a in (2, 3, 5, 7, 11, 13, 17):
+            if pow(a, n - 1, n) != 1:
                 return False
         return True
 
-    # 否则，使用已知的“确定性”基底集，可在 64 位整数范围内零误判
-    # 参考：https://miller-rabin.appspot.com/ （常用基底集）
-    deterministic_bases = [2, 325, 9375, 28178, 450775, 9780504, 1795265022]
-    for a in deterministic_bases:
-        if a % n == 0:
-            # 基底 a 与 n 不互素，跳过
-            continue
-        if not trial(a):
-            return False
-    return True
+    # 否则做随机轮；rounds=None ⇒ 使用默认 40 轮
+    assert rounds is None or rounds >= 1, "`rounds` 必须 ≥1 或 None"
+    return _miller_rabin(n, rounds or 40)
 
-
-def generate_random_prime(bits: int, k: int = 40) -> int:
-    """生成一个指定位长的安全素数
-
-    Parameters
-    ----------
-    bits : int
-        位长（≥ 2）
-    k : int, default 40
-        Miller–Rabin 轮数
-
-    Returns
-    -------
-    int
-        随机安全素数 p
+def generate_random_prime(bits: int, *, rounds: int = 40) -> int:
     """
-    # TODO:未使用miller-rabin的k参数
-    while True:
-        num = random.getrandbits(bits)
-        # 确保是奇数并且有正确的位数
-        num |= (1 << bits - 1) | 1
-        if is_prime(num):
-            return num
+    生成位长为 `bits` 的安全素数 p = 2q + 1，且 q 亦为素数  
+    `rounds` 控制 Miller-Rabin 轮数（默认 40 ⇒ 误判概率 ≤ 2⁻⁸⁰）
+    """
+    if bits < 256:
+        raise ValueError("bits 至少 256 才安全")
 
+    while True:
+        # 生成 (bits-1) 位奇数 q：最高、最低位皆为 1
+        q = secrets.randbits(bits - 1) | (1 << (bits - 2)) | 1
+        if not is_prime(q, rounds=rounds):
+            continue
+        p = (q << 1) + 1
+        if is_prime(p, rounds=rounds):
+            return p
 
 def next_prime(n: int) -> int:
     """返回 ≥ n 的下一个素数
