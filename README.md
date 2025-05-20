@@ -53,9 +53,9 @@ print("Decrypted:", decrypted)
 # --- ECC-ElGamal ---
 print("\n🔐 ECC-ElGamal Example:")
 public_key, private_key = generate_ecc_elgamal_keypair()
-encrypted = ecc_elgamal_encrypt(message, public_key)
+r,encrypted = ecc_elgamal_encrypt(message, public_key)
 print("Encrypted:", encrypted)
-decrypted = ecc_elgamal_decrypt(encrypted, private_key)
+decrypted = ecc_elgamal_decrypt(r,encrypted, private_key)
 print("Decrypted:", decrypted)
 ```
 
