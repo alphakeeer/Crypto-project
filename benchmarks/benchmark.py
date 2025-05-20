@@ -18,6 +18,8 @@ from crypto import (
     generate_rsa_keypair,
     rsa_encrypt,
     rsa_decrypt,
+    rsa_encrypt_long,
+    rsa_decrypt_long,
     generate_elgamal_keypair,
     elgamal_encrypt,
     elgamal_decrypt,
@@ -126,16 +128,27 @@ def _rsa_ops(size: int) -> tuple[float, float, float, bool]:
     msg = ''.join(random.choices(string.ascii_letters + string.digits, k=10000)).encode()
 
     print(f"  开始 RSA 加密，位长: {size}")
+    n_bytes = (pub.n.bit_length() + 7) // 8
+
     # 记录加密开始时间
     start_enc = time.time()
-    cipher = rsa_encrypt(msg, pub)
+    if(len(msg) > n_bytes - 11):
+        # 如果消息过长，使用长文本加密
+        cipher = rsa_encrypt_long(msg, pub)
+    else:
+        cipher = rsa_encrypt(msg, pub)
+
     enc_time = time.time() - start_enc
     print(f"  RSA 加密完成，耗时: {enc_time:.6f} 秒")
 
     print(f"  开始 RSA 解密，位长: {size}")
     # 记录解密开始时间
     start_dec = time.time()
-    decrypted = rsa_decrypt(cipher, priv)
+    if(len(msg) > n_bytes - 11):
+        # 如果消息过长，使用长文本解密
+        decrypted = rsa_decrypt_long(cipher, priv)
+    else:
+        decrypted = rsa_decrypt(cipher, priv)
     dec_time = time.time() - start_dec
     print(f"  RSA 解密完成，耗时: {dec_time:.6f} 秒")
     is_success = decrypted == msg
