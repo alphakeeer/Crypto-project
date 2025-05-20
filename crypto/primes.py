@@ -12,8 +12,6 @@ from functools import lru_cache
 import secrets
 import math
 
-
-
 # 一组小素数，用于快速试除
 # 首先预计算 1000 以内所有素数，供快速试除
 @lru_cache(maxsize=1)
@@ -117,4 +115,15 @@ def next_prime(n: int) -> int:
     int
         向上最近的素数
     """
-    pass
+    if n < 2:
+        return 2
+    if n == 2:
+        return 3
+    if n & 1 == 0:
+        n += 1
+
+    # 从 n 开始，逐个加 2找奇数，直到找到素数
+    while True:
+        if is_prime(n):
+            return n
+        n += 2
