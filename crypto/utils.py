@@ -9,7 +9,10 @@ import random
 
 def gcd(a: int, b: int) -> int:
     """最大公约数"""
-    pass
+    if a==0:
+        return b
+    else:
+        return gcd(b % a, a)
 
 def extended_gcd(a: int, b: int) -> Tuple[int, int, int]:
     """扩展欧几里得算法"""
@@ -21,7 +24,7 @@ def extended_gcd(a: int, b: int) -> Tuple[int, int, int]:
 
 def lcm(a: int, b: int) -> int:
     """最小公倍数"""
-    pass
+    return a / gcd(a, b) * b
 
 
 def modinv(a: int, m: int) -> int:
@@ -29,11 +32,13 @@ def modinv(a: int, m: int) -> int:
     g, x, y = extended_gcd(a, m)
     if g != 1:
         raise ValueError('模逆元不存在')
+    return x % m
+    
 
 
 def bytes_to_int(data: bytes) -> int:
     """按大端序将字节串转换为整数"""
-    pass
+    return int.from_bytes(data, byteorder='big')
 
 
 def int_to_bytes(n: int, length: int | None = None) -> bytes:
@@ -41,7 +46,9 @@ def int_to_bytes(n: int, length: int | None = None) -> bytes:
 
     若 `length` 为 None，则自动推断最短长度。
     """
-    pass
+    if length is None:
+        length = (n.bit_length() + 7) // 8
+    return n.to_bytes(length, byteorder='big')
 
 
 def pad_pkcs1(data: bytes, n_bytes: int) -> bytes:
