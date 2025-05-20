@@ -22,7 +22,10 @@ from crypto import (
 
 
 def benchmark_algorithm(alg: str, bits: List[int], repeats: int = 5) -> pd.DataFrame:
-    """统计 keygen / enc / dec 平均耗时（秒）"""
+    """
+    统计 keygen / enc / dec 平均耗时（秒）
+    同时输出可视化结果
+    """
     pass
 
 
