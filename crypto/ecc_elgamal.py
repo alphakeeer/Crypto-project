@@ -122,26 +122,6 @@ def decrypt(R: Tuple[int,int], ct: bytes, priv: ECCElGamalPrivateKey) -> bytes:
     msg = _xor_bytes(ct, keystream)
     return msg
 
-# ────────────────────────── 文件读写 ──────────────────────────
-def encrypt_file(in_path: str, out_path: str, pub: ECCElGamalPublicKey) -> None:
-    with open(in_path, 'rb') as f:
-        data = f.read()
-    R, ct = encrypt(data, pub)
-    # 写成文本两行：R.x|R.y|hex(ct)
-    with open(out_path, 'w') as f:
-        f.write(f"{R[0]:x}|{R[1]:x}\n")
-        f.write(ct.hex())
-
-def decrypt_file(in_path: str, out_path: str, priv: ECCElGamalPrivateKey) -> None:
-    with open(in_path, 'r') as f:
-        line = f.readline().strip()
-        xs, ys = line.split('|')
-        R = (int(xs, 16), int(ys, 16))
-        ct = bytes.fromhex(f.read().strip())
-    msg = decrypt(R, ct, priv)
-    with open(out_path, 'wb') as f:
-        f.write(msg)
-
 # ────────────────────────── 示例 ──────────────────────────
 if __name__ == "__main__":
     # 示例明文
