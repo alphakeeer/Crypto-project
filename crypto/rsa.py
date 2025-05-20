@@ -1,3 +1,4 @@
+
 """
 RSA 公钥密码系统  
 核心流程：密钥生成 → 加密 / 解密 → 签名 / 验签
@@ -11,8 +12,13 @@ import math
 import random
 import hashlib
 
-from .primes import *
-from .utils import *
+try:
+    from .primes import *
+    from .utils import *
+except ImportError:
+    # Fallback for when running as script
+    from primes import *
+    from utils import *
 
 # ─────────────────────── 数据结构 ────────────────────────
 
