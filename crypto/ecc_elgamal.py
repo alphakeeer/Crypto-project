@@ -51,7 +51,7 @@ def _point_add(P: Tuple[int,int], Q: Tuple[int,int]) -> Tuple[int,int]:
     return (x3, y3)
 
 def _scalar_mul(k: int, P: Tuple[int,int]) -> Tuple[int,int]:
-    """Double-and-add: 标量乘法 k·P"""
+    """Double-and-add: 基于点加定义标量乘法 k·P"""
     R = None
     Q = P
     for bit in bin(k)[2:]:
@@ -61,7 +61,7 @@ def _scalar_mul(k: int, P: Tuple[int,int]) -> Tuple[int,int]:
     return R
 
 def _kdf(x_coord: int) -> bytes:
-    """简单 KDF: SHA256(x 坐标大端字节) → 32 字节密钥"""
+    """简单 KDF: SHA256 → 32 字节密钥"""
     bx = x_coord.to_bytes((x_coord.bit_length()+7)//8, 'big')
     return hashlib.sha256(bx).digest()
 
