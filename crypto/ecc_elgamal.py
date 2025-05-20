@@ -9,7 +9,7 @@ import hashlib
 from dataclasses import dataclass
 from typing import Tuple
 
-# ────────────────────────── 曲线参数（secp256k1） ──────────────────────────
+# ────────────────────────── 曲线参数（secp256k1） ─────────────
 # y^2 = x^3 + a*x + b  over F_p
 _p  = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEFFFFFC2F
 _a  = 0
